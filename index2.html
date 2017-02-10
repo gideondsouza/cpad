@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+        <head>
+                <meta charset="utf-8">
+                <title></title>
+                <!-- Create a simple CodeMirror instance -->
+                <link rel="stylesheet" href="./node_modules/codemirror/lib/codemirror.css">
+                <script src="./node_modules/codemirror/lib/codemirror.js"></script>
+                <script>window.$ = window.jQuery = require('jquery');</script>
+
+        </head>
+        <body>
+                <textarea id='code'>
+                        helo
+                </textarea>
+                <button id='btn-next'>Next</button>
+                <button id='btn-open'>Open</button>
+                <script>
+                  var myTextarea = document.getElementById('code');
+                  console.log(myTextarea);
+                  var editor = CodeMirror.fromTextArea(myTextarea, {
+                    lineNumbers: true
+                  });
+                
+                var remote = require('electron').remote; 
+                var dialog = remote.dialog;
+                var fs = require('fs');
+                
+                function readFile(filepath) {
+                       fs.readFile(filepath, 'utf-8', function (err, data) {
+                           if(err){
+                               alert("An error ocurred reading the file :" + err.message);
+                               return;
+                           }
+                           editor.getDoc().setValue(data);
+                       });
+                   }
+   
+                $("#btn-next").click(()=> 
+                {
+                        if(!window.g)
+                        {
+                                var Gdb = require("./libgdb.js");
+                                window.g = new Gdb("gdb-test");
+                        }
+                        
+                        //= console.log(require('electron').remote.getGlobal("sharedGDB"));
+                        
+                        window.g.gdbp.stdout.on('data', function(d) {
+                                console.log(`${d}`);
+                        });
+                        window.g.put(editor.getDoc().getValue() + "\n");
+                });
+                $("#btn-open").click(()=> {
+                        var fl = 
+                                dialog.showOpenDialog(
+                                        {
+                                                properties: 
+                                                ['openFile', 'multiSelections'],
+                                                filters: 
+                                                [ {name: 'All Files', extensions: ['*']}],
+                                        })[0];
+                                        console.log(fl);
+                        readFile(fl);                
+                });
+                </script>
+        </body>
+
+</html>
